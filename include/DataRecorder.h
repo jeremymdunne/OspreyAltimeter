@@ -30,6 +30,15 @@ No reverse parsing is preformed by the controller (with the exception of flight 
 #include <DataFlags.h>
 #include <SmallFAT.h>
 #include <Arduino.h>
+#include <DataStorageParams.h>
+
+//Causes Storage to be not be written to!  
+#define DEBUG_DATA_STORAGE
+#define SERIAL_WRITE_DEBUG_STORAGE
+
+
+#define DATA_RECORDING_DATA_LESS_THAN_MIN_VAL 1
+#define DATA_RECORDING_DATA_GREATER_THAN_MAX_VAL 2
 
 #define DATA_RECORDING_STORAGE_INIT_FAILURE -1
 #define DATA_RECORDING_NO_MORE_FILES -2
@@ -38,6 +47,8 @@ No reverse parsing is preformed by the controller (with the exception of flight 
 #define DATA_RECORDING_FILE_DOES_NOT_EXIST -5
 #define DATA_RECORDING_FILE_CLOSE_ERROR -6
 #define DATA_RECORDING_WRITE_ERROR -7
+#define DATA_RECORDING_BARO_TEMP_DATA_RECORD_ERROR -8
+#define DATA_WRITE_ERROR -9
 
 class DataRecorder{
 public:
@@ -181,6 +192,8 @@ private:
   int record_filtered_alt_data(FilteredAltData *data);
   int record_filtered_vel_data(FilteredVelData *data);
   //int record_filtered_attitude_data();  //TODO
+
+  int scale_data(float value, byte *buf, uint length, float minVal, float maxVal);
 
 
 

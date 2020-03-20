@@ -26,10 +26,11 @@ Flight Recorder will also be responsible for caching data before launch detectio
 #include <DataFlags.h>
 #include <RocketState.h>
 #include <UpdateScheduler.h>
+#include <DataRecorder.h>
 
 
 #define PRE_LAUNCH_RECORDING_BUFFER 512
-#define FLIGHT_RECORDER_RECORDING_NOT_NECESSARY 1 
+#define FLIGHT_RECORDER_RECORDING_NOT_NECESSARY 1
 
 
 class FlightRecorder{
@@ -40,6 +41,7 @@ public:
     FLIGHT_COMPLETED, PAUSED
   };
 
+  //fill with basic data
   struct DataRecordingFrequency{
     uint raw_gyro_frequency = 10;
     uint raw_accel_frequency = 10;
@@ -60,6 +62,8 @@ public:
   int save_pre_launch_recording();
 
   int start_recording();
+
+  int pause_recording();
 
   int stop_recording();
 

@@ -17,7 +17,6 @@ Event Flags are likewise used in this manner
 
 //Flags
 //Data members
-#define RAW_IMU_DATA_FLAG 1
 #define RAW_BARO_TEMP_DATA_FLAG 2
 #define FILTERED_ALT_DATA_FLAG 3
 #define FILTERED_VEL_DATA_FLAG 4
@@ -40,7 +39,7 @@ Event Flags are likewise used in this manner
 #define PYRO_ONE_FLAG 101
 #define PYRO_TWO_FLAG 102
 #define PYRO_THREE_FLAG 103
-#define PYRO_FOUR_FLAG 104  
+#define PYRO_FOUR_FLAG 104
 
 
 //miscelaneous

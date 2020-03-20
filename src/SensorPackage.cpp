@@ -71,7 +71,7 @@ int SensorPackage::updateImu(){
 
 int SensorPackage::updateBmp(){
   bmp.readSensor(&rawData.pressureData.temperature, &rawData.pressureData.pressure);
-  rawData.pressureData.timestamp = micros();
+  rawData.pressureData.timestamp = millis();
   return 0;
 }
 

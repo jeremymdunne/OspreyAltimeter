@@ -113,14 +113,24 @@ int DataRecorder::write_data(uint flag, unsigned long timestamp, byte *buffer, u
   writeBuf[0] = (uint8_t)(flag >> 8);
   writeBuf[1] = (uint8_t)(flag % 256);
   writeBuf[2] = size + 6;
-  writeBuf[3] = (uint8_t)((flag >> 16)%256);
-  writeBuf[4] = (uint8_t)((flag >> 8)%256);
-  writeBuf[5] = (uint8_t)(flag % 256);
-  for(int i = 0; i < size; i ++){
+  writeBuf[3] = (uint8_t)((timestamp >> 16)%256);
+  writeBuf[4] = (uint8_t)((timestamp >> 8)%256);
+  writeBuf[5] = (uint8_t)(timestamp % 256);
+  for(uint i = 0; i < size; i ++){
     writeBuf[6+i] = buffer[i];
   }
   //write this now
-  int error = storage.write(&writeBuf[0],6+size);
+  #ifdef SERIAL_WRITE_DEBUG_STORAGE
+    Serial.print("\nDataRecorder Writing: Flag: " + String(flag) + "; Timestamp: " + String(timestamp) + "; Buffer: ");
+    for(uint i = 0; i < (6 + size); i ++){
+      Serial.print(String(writeBuf[i]) + " ");
+    }
+    Serial.println();
+  #endif
+  int error = 0;
+  #ifndef DEBUG_DATA_STORAGE
+    error = storage.write(&writeBuf[0],6+size);
+  #endif
   if(error < 0){
     lastError = error;
     return DATA_RECORDING_WRITE_ERROR;
@@ -130,5 +140,59 @@ int DataRecorder::write_data(uint flag, unsigned long timestamp, byte *buffer, u
 
 int DataRecorder::recordStateData(int dataFlag, RocketState *state){
   //TODO handle
-  return 0; 
+  int error = 0;
+  switch(dataFlag){
+    case(RAW_BARO_TEMP_DATA_FLAG):
+      error = record_raw_baro_temp_data(&state->rawSensorData.pressureData);
+      break;
+
+  }
+  if(error < 0){
+    //already have an error passthrough, don't use the typical lastError format
+    return error;
+  }
+  return 0;
+}
+
+int DataRecorder::scale_data(float value, byte *buf, uint length, float minVal, float maxVal){
+  int error = 0;
+  float min_offset_value = value - minVal;
+  if(min_offset_value < 0){
+    min_offset_value = 0;
+    error = DATA_RECORDING_DATA_LESS_THAN_MIN_VAL;
+  }
+  else if(min_offset_value > maxVal - minVal){
+    min_offset_value = maxVal - minVal;
+    error = DATA_RECORDING_DATA_GREATER_THAN_MAX_VAL;
+  }
+  float scale = (maxVal - minVal) / pow(2,8 * length);
+  unsigned long a = (unsigned long)(min_offset_value / scale + .5);
+  if (a > pow(2,8*length)){
+    a = pow(2,8*length);
+  }
+  for(int i = 0; i < length; i ++){
+    buf[i] = (a >> ((length - i - 1) * 8) ) % 256;
+  }
+  return error;
+}
+
+int DataRecorder::record_raw_baro_temp_data(RawPressureData *data){
+  //scale data
+  byte dataBuffer[RAW_BARO_SIZE];
+  int error = scale_data(data->pressure, &dataBuffer[0], RAW_BARO_SIZE, MIN_PRESSURE, MAX_PRESSURE);
+  for(int i = 0; i < RAW_BARO_SIZE; i ++){
+    Serial.print(String(dataBuffer[i]) + " ");
+  }
+  Serial.println();
+  if(error < 0){
+    lastError = error;
+    return DATA_RECORDING_BARO_TEMP_DATA_RECORD_ERROR;
+  }
+  //go and write the data to storage
+  error = write_data(RAW_BARO_TEMP_DATA_FLAG,data->timestamp,&dataBuffer[0],RAW_BARO_SIZE);
+  if(error < 0){
+    lastError = error;
+    return DATA_WRITE_ERROR;
+  }
+  return 0;
 }
